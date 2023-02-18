@@ -4,11 +4,16 @@
 docker buildx bake --builder builder -f docker-bake.hcl --push service_group
 */
 
-PYTHON_VER = "3.11.0"
-POETRY_VER = "1.2.2"
+PYTHON_VER = "3.11.2"
+POETRY_VER = "1.3.2"
 NGINX_VER = "1.23"
 
-REPO = "localhost:5000"
+REPO = "docker-registry:5000"
+
+PLATFORMS = [
+    "linux/amd64",
+    "linux/arm64",
+]
 
 target "webapp" {
     dockerfile = "webapp/Dockerfile"
@@ -16,33 +21,27 @@ target "webapp" {
         NGINX_VER = "${NGINX_VER}"
     }
     tags = [ "${REPO}/docker-example/webapp" ]
-    platforms = [
-        "linux/amd64",
-    ]
+    platforms = PLATFORMS
 }
 
 # базовый образ для сервисов python
-target "base_image" {
+target "base_python_image" {
     dockerfile = "shared/Dockerfile"
     args = {
         POETRY_VER = "${POETRY_VER}",
         PYTHON_VER = "${PYTHON_VER}",
     }
-    platforms = [
-        "linux/amd64",
-    ]
+    platforms = PLATFORMS
 }
 
 
 target "python_service" {
     contexts = {
-        base_image = "target:base_image"
+        base_image = "target:base_python_image"
     }
     dockerfile = "python_service/Dockerfile"
     tags = [ "${REPO}/docker-example/python_service" ]
-    platforms = [ 
-        "linux/amd64",
-    ]
+    platforms = PLATFORMS
 }
 
 

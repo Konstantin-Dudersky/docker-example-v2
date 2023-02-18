@@ -8,34 +8,6 @@ name: kleck
 
 services:
 
-  docker_registry:
-    image: registry:2.7
-    container_name: docker_registry
-    ports:
-      - "5000:5000"
-    profiles:
-      - system
-    restart: always
-    volumes:
-      - docker_registry_volume:/var/lib/registry
-      - ./docker-registry-config.yml:/etc/docker/registry/config.yml
-
-  docker_registry_ui:
-    image: joxit/docker-registry-ui:latest
-    container_name: docker_registry_ui
-    depends_on:
-      - docker_registry
-    environment:
-      - REGISTRY_TITLE=My Private Docker Registry
-      - REGISTRY_URL=http://target:5000
-      - SINGLE_REGISTRY=true
-      - DELETE_IMAGES=true
-    ports:
-      - "8000:80"
-    profiles:
-      - system
-    restart: always
-
   portainer:
     image: portainer/portainer-ce:latest
     container_name: portainer
@@ -49,7 +21,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
   webapp:
-    image: target:5000/docker-example/webapp
+    image: docker-registry:5000/docker-example/webapp
     container_name: webapp
     hostname: webapp
     profiles:
@@ -58,7 +30,7 @@ services:
       - "80:80"
 
   python_service:
-    image: target:5000/docker-example/python_service
+    image: docker-registry:5000/docker-example/python_service
     container_name: python_service
     hostname: python_service
     privileged: true
@@ -71,7 +43,5 @@ services:
       - .:/root/code
 
 volumes:
-  docker_registry_volume:
-    name: docker_registry_volume
   portainer_data_volume:
     name: portainer_data_volume
