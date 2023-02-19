@@ -40,23 +40,61 @@ __IP_DEV__    docker-registry
 Клонируем репозиторий:
 
 ```sh
-cd ~/snap \
-	&& git clone https://github.com/Joxit/docker-registry-ui.git
+cd ~/snap && mkdir docker-registry
 ```
 
-Настроим веб-интерфейс для работы через порт 8000.
+Создадим файлы. Файл конфигурации хранилища образов `docker-registry-config.yml`:
 
-- в файле `~/snap/docker-registry-ui/examples/ui-as-standalone/registry-config/simple.yml` поменять заголовок:
-
-```yml
-Access-Control-Allow-Origin: ["*"]
+```yaml
+version: 0.1
+log:
+  fields:
+    service: registry
+storage:
+  delete:
+    enabled: true
+  cache:
+    blobdescriptor: inmemory
+  filesystem:
+    rootdirectory: /var/lib/registry
+http:
+  addr: :5000
+  headers:
+    X-Content-Type-Options: [nosniff]
+    Access-Control-Allow-Origin: ['*']
+    Access-Control-Allow-Methods: ['HEAD', 'GET', 'OPTIONS', 'DELETE']
+    Access-Control-Allow-Headers: ['Authorization', 'Accept', 'Cache-Control']
+    Access-Control-Expose-Headers: ['Docker-Content-Digest']
 ```
 
-- поменять порт для сервиса `ui` в файле `~/snap/docker-registry-ui/examples/ui-as-standalone/simple.yml`
+Файл для запуска хранилища и веб-интерфейса:
 
-```yml
-ports:
-	8000:80
+```yaml
+version: '2.0'
+name: docker-registry
+
+services:
+  registry:
+    image: registry:2.8
+    container_name: docker-registry
+    ports:
+      - 5000:5000
+    volumes:
+      - ./registry-data:/var/lib/registry
+      - ./docker-registry-config.yml:/etc/docker/registry/config.yml
+
+  ui:
+    image: joxit/docker-registry-ui:latest
+    container_name: docker-registry-ui
+    ports:
+      - 8000:80
+    environment:
+      - REGISTRY_TITLE=My Private Docker Registry
+      - REGISTRY_URL=http://docker-registry:5000
+      - SINGLE_REGISTRY=true
+      - THEME=dark
+    depends_on:
+      - registry
 ```
 
 ### Запуск
@@ -64,8 +102,8 @@ ports:
 Запускать командой:
 
 ```sh
-cd ~/snap/docker-registry-ui/examples/ui-as-standalone \
-	&& docker compose -f simple.yml up -d
+cd ~/snap/docker-registry \
+	&& docker compose up -d
 ```
 
 - Репозиторий образов доступен по адресу: http://docker-registry:5000
