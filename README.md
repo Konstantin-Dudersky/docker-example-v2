@@ -67,7 +67,7 @@ http:
     Access-Control-Expose-Headers: ['Docker-Content-Digest']
 ```
 
-Файл для запуска хранилища и веб-интерфейса:
+Файл для запуска хранилища и веб-интерфейса `docker-compose.yml`:
 
 ```yaml
 version: '2.0'
